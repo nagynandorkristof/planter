@@ -81,6 +81,7 @@ WSGI_APPLICATION = 'planter.wsgi.application'
 LOGIN_URL = 'identity:login'
 LOGIN_REDIRECT_URL = 'plants:plant-list'
 LOGOUT_REDIRECT_URL = 'identity:login'
+AUTH_USER_MODEL = 'identity.User'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases

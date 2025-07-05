@@ -1,8 +1,10 @@
 from django.db import models
 from django.contrib.sites.models import Site
-from django.contrib.auth.models import User, Group
 from django.contrib.sites.managers import CurrentSiteManager
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 
+User = get_user_model()
 
 class Project(models.Model):
     id = models.BigAutoField(primary_key=True)

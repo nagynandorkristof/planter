@@ -113,3 +113,109 @@ class UnsubscribeWateringReminderView(LoginRequiredMixin, View):
         WateringNotificationSubscription.objects.filter(user=request.user, plant=plant).delete()
         return redirect('plants:plant-detail', pk=plant.id)
     
+# APIS
+
+from .serializers import PlantSerializer, ProjectSerializer, WateringLogSerializer, WateringSerializer, SubscriptionSerializer
+from rest_framework import generics, permissions
+from django.http import HttpResponseForbidden
+from rest_framework.response import Response
+
+class CurrentProjectAPIView(generics.RetrieveAPIView):
+    """
+    Retrieves the current project for the site associated with the request.
+    This view is used to get the project details for the current site.
+    """
+    serializer_class = ProjectSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        return get_object_or_404(Project, site=get_current_site(self.request))
+    
+class PlantListAPIView(generics.ListAPIView):
+    """
+    Lists all plants for the current site that are not archived.
+    """
+    serializer_class = PlantSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Plant.objects.filter(project__site=get_current_site(self.request), archived=False)
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+class PlantDetailAPIView(generics.RetrieveAPIView):
+    """
+    Retrieves a specific plant by its ID.
+    The plant must belong to the current site and must not be archived.
+    """
+    serializer_class = PlantSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Plant.objects.filter(project__site=get_current_site(self.request), archived=False)
+
+class WateringLogListAPIView(generics.ListAPIView):
+    """
+    Lists all watering logs for a specific plant.
+    The plant must belong to the current site and must not be archived.
+    """
+    serializer_class = WateringLogSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        plant_id = self.kwargs['pk']
+        return WateringLog.objects.filter(
+            plant__id=plant_id,
+            plant__project__site=get_current_site(self.request),
+            plant__archived=False
+        )
+
+class WateringAPIView(generics.GenericAPIView):
+    """
+    Allows a user to water a plant.
+    The plant must belong to the current site and must not be archived.
+    """
+    serializer_class = WateringSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        plant = serializer.validated_data['plant']
+        if plant.archived:
+            return HttpResponseForbidden("Cannot water an archived plant.")
+        serializer.save(watered_by=request.user)
+        return Response({"status": "Plant watered successfully."})
+    
+class SubscriptionAPIView(generics.GenericAPIView):
+    """
+    Allows users to subscribe or unsubscribe to watering notifications for a specific plant.
+    The plant must belong to the current site and must not be archived.
+    Users can only manage their own subscriptions.
+    """
+    serializer_class = SubscriptionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return WateringNotificationSubscription.objects.filter(user=self.request.user, plant__archived=False)
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        subscription, created = WateringNotificationSubscription.objects.get_or_create(
+            user=request.user,
+            plant=serializer.validated_data['plant']
+        )
+        if created:
+            return Response({"status": "Subscribed successfully."})
+        return Response({"status": "Already subscribed."})
+
+    def delete(self, request, *args, **kwargs):
+        subscription = get_object_or_404(
+            WateringNotificationSubscription,
+            user=request.user,
+            plant__id=kwargs['pk']
+        )
+        subscription.delete()
+        return Response({"status": "Unsubscribed successfully."})

@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'django.contrib.sitemaps',
     'rest_framework',
+    'drf_spectacular',
     'project',
     'identity',
 ]
@@ -91,6 +92,21 @@ DATABASES = {
 }
 
 SITE_ID = 1
+
+REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+    ]
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Planter API',
+    'DESCRIPTION': 'API for the Planter project, which manages plants and their watering schedules',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': True,
+    'SCHEMA_PATH_PREFIX': '/api',
+}
 
 
 # Password validation

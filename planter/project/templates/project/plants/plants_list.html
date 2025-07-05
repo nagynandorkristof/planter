@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load project_extras %}
+{% block content %}
+<h1 class="mb-4">Plants in Project: {{ project.name }}</h1>
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Name</th>
+                <th>Species</th>
+                <th>Last Watered</th>
+                <th>Image</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for plant in plants %}
+            <tr>
+                <td>{{ plant.name }}</td>
+                <td>{{ plant.species }}</td>
+                <td>
+                    {% with lw=last_watered|get_value:plant.id %}
+                    {% if lw %}
+                        {{ lw.watered_at|date:"Y-m-d H:i" }}
+                    {% else %}
+                        <span class="text-muted">Never</span>
+                    {% endif %}
+                    {% endwith %}
+                </td>
+                <td>
+                    {% if plant.image %}
+                        <img src="{{ plant.image.url }}" alt="{{ plant.name }}" class="img-thumbnail" style="max-width:100px;">
+                    {% else %}
+                        <span class="text-muted">No Image</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'plants:plant-detail' plant.id %}" class="btn btn-sm btn-primary">View</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center text-muted">No plants found for this project.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

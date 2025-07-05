@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="card shadow plant-detail">
+        <div class="card-header bg-success text-white">
+            <h1 class="card-title mb-0">{{ plant.name }}</h1>
+        </div>
+        <div class="card-body">
+            {% if plant.image %}
+                <div class="text-center mb-4">
+                    <img src="{{ plant.image.url }}" alt="{{ plant.name }}" class="img-fluid rounded" style="max-width:300px;">
+                </div>
+            {% endif %}
+            <p class="card-text">{{ plant.description }}</p>
+            <ul class="list-group list-group-flush mb-4">
+                <li class="list-group-item"><strong>Recommended watering interval:</strong> {{ plant.recommended_watering_interval }} days</li>
+                <li class="list-group-item"><strong>Project:</strong> {{ plant.project.name }}</li>
+                <li class="list-group-item"><strong>Created by:</strong> {{ plant.created_by }}</li>
+                <li class="list-group-item"><strong>Archived:</strong> {{ plant.archived|yesno:"Yes,No" }}</li>
+            </ul>
+
+            <hr>
+
+            <h2 class="h5">Water this plant</h2>
+            <form method="post" action="{% url 'plants:plant-water' pk=plant.id %}" enctype="multipart/form-data" class="mb-4">
+                {% csrf_token %}
+                {{ water_plant_form.as_p }}
+                <button type="submit" class="btn btn-success">Water Plant</button>
+            </form>
+
+            <hr>
+
+            <h2 class="h5">Watering Reminder Subscription</h2>
+            <div class="mb-4">
+                {% if subscribed %}
+                    <form method="post" action="{% url 'plants:plant-unsubscribe' pk=plant.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-warning">Unsubscribe from reminders</button>
+                    </form>
+                {% else %}
+                    <form method="post" action="{% url 'plants:plant-subscribe' pk=plant.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary">Subscribe to reminders</button>
+                    </form>
+                {% endif %}
+            </div>
+
+            <hr>
+
+            <h2 class="h5">Watering History</h2>
+            {% if watering_logs %}
+                <ul class="list-group mb-4">
+                    {% for log in watering_logs %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>
+                                {{ log.watered_at|date:"Y-m-d H:i" }} by {{ log.watered_by }}
+                                {% if log.image %}
+                                    - <a href="{{ log.image.url }}" target="_blank" class="link-primary">Photo</a>
+                                {% endif %}
+                            </span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-muted">No watering history yet.</p>
+            {% endif %}
+
+            <hr>
+
+            <div class="d-flex justify-content-between align-items-center">
+                <form method="post" action="{% url 'plants:plant-archive' pk=plant.id %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger" {% if plant.archived %}disabled{% endif %}>Archive Plant</button>
+                </form>
+                <a href="{% url 'plants:plant-list' %}" class="btn btn-secondary">Back to Plant List</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

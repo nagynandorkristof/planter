@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Add Plant to Project: {{ project.name }}</h2>
+    <form method="post" enctype="multipart/form-data" class="mt-3">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <div class="mb-3">
+            <label for="{{ form.name.id_for_label }}" class="form-label">Name</label>
+            {{ form.name|as_widget:attrs }}
+            {{ form.name.errors }}
+        </div>
+        <div class="mb-3">
+            <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+            {{ form.description|as_widget:attrs }}
+            {{ form.description.errors }}
+        </div>
+        <div class="mb-3">
+            <label for="{{ form.image.id_for_label }}" class="form-label">Image</label>
+            {{ form.image|as_widget:attrs }}
+            {{ form.image.errors }}
+        </div>
+        <div class="mb-3">
+            <label for="{{ form.recommended_watering_interval.id_for_label }}" class="form-label">Recommended Watering Interval (days)</label>
+            {{ form.recommended_watering_interval|as_widget:attrs }}
+            {{ form.recommended_watering_interval.errors }}
+        </div>
+        <button type="submit" class="btn btn-primary">Add Plant</button>
+        <a href="{% url 'plants:plant-list' project.id %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}
